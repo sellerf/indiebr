@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IndieBR - Jogos independentes</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      color-scheme: dark;
+      --fundo: #17152b;
+      --fundo-header: #24213f;
+      --fundo-secundario: #201d38;
+      --fundo-cartao: #302858;
+      --borda-cartao: #514579;
+      --texto: #fff8e7;
+      --texto-destaque: #ffd166;
+      --texto-suave: #7ce7c7;
+      --fundo-rodape: #100f20;
+      --sombra-modal: rgba(0, 0, 0, 0.5);
+    }
+
+    /* O tema claro sobrescreve as mesmas variáveis de cor. */
+    :root[data-tema="claro"] {
+      color-scheme: light;
+      --fundo: #f5f3ff;
+      --fundo-header: #ffffff;
+      --fundo-secundario: #e9e5f7;
+      --fundo-cartao: #ffffff;
+      --borda-cartao: #c8c0e2;
+      --texto: #211d35;
+      --texto-destaque: #765000;
+      --texto-suave: #08765b;
+      --fundo-rodape: #e3def1;
+      --sombra-modal: rgba(30, 20, 60, 0.2);
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--fundo);
+      color: var(--texto);
+      line-height: 1.6;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    header {
+      background: var(--fundo-header);
+      padding: 20px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      color: #009739;
+    }
+
+    h1 span {
+      color: #FEDD00;
+    }
+
+    nav a {
+      color: var(--texto);
+      text-decoration: none;
+      margin: 0 8px;
+    }
+
+    nav a:hover {
+      color: #ffd166;
+    }
+
+    .controle-tema {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.95rem;
+    }
+
+    /* Um único controle arredondado reúne as três opções. */
+    .seletor-tema {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 4px;
+      border: 1px solid var(--borda-cartao);
+      border-radius: 999px;
+      background: var(--fundo-secundario);
+    }
+
+    .indicador-tema {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--fundo-cartao);
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+      transition: transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    .seletor-tema[data-selecao="claro"] .indicador-tema {
+      transform: translateX(36px);
+    }
+
+    .seletor-tema[data-selecao="sistema"] .indicador-tema {
+      transform: translateX(72px);
+    }
+
+    .opcao-tema {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--texto);
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    .opcao-tema:focus-visible {
+      outline: 2px solid var(--texto-destaque);
+      outline-offset: 2px;
+    }
+
+    .nome-tema {
+      min-width: 82px;
+      color: var(--texto);
+      font-size: 0.9rem;
+    }
+
+    section {
+      padding: 55px 8%;
+    }
+
+    .inicio {
+      background: var(--fundo-cartao);
+      text-align: center;
+      padding: 80px 8%;
+    }
+
+    .inicio h2 {
+      font-size: 2.5rem;
+      line-height: 1.2;
+    }
+
+    .etiqueta {
+      color: #7ce7c7;
+      font-weight: bold;
+    }
+
+    .botao, button {
+      display: inline-block;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 16px;
+      background: #ffd166;
+      color: #17152b;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      margin: 4px;
+    }
+
+    button:hover, .botao:hover {
+      background: #ff6b8a;
+    }
+
+    #jogos, #apoie {
+      background: var(--fundo-secundario);
+    }
+
+    .filtros {
+      margin: 20px 0;
+    }
+
+    .lista-jogos, .dicas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .jogo, .dicas article {
+      background: var(--fundo-cartao);
+      border: 2px solid var(--borda-cartao);
+      border-radius: 10px;
+      padding: 16px;
+      flex: 1 1 220px;
+    }
+
+    /* Os cartões indicam que podem ser clicados. */
+    .jogo {
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .jogo:hover {
+      transform: translateY(-4px);
+      border-color: #ffd166;
+    }
+
+    .capa {
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      border-radius: 6px;
+      color: #fff8e7;
+      background-color: #514579;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Imagens das capas dos jogos. */
+    .capa-celeste {
+      background-image: url('./imagens/celeste.jpg');
+    }
+
+    .capa-hollow {
+      background-image: url('./imagens/hollow.jpg');
+    }
+
+    .capa-stardew {
+      background-image: url('./imagens/stardew.jpg');
+    }
+
+    .capa-dandara {
+      background-image: url('./imagens/dandara.jpg');
+    }
+
+    /* A aspa extra foi removida desta regra. */
+    .capa-nine {
+      background-image: url('./imagens/ninesols.jpg');
+    }
+
+    .jogo h3 {
+      color: var(--texto-destaque);
+    }
+
+    .manifesto {
+      background: var(--fundo-cartao);
+      border-left: 8px solid #ff6b8a;
+    }
+
+    .mensagem {
+      color: var(--texto-suave);
+      font-weight: bold;
+    }
+
+    footer {
+      padding: 30px 8%;
+      text-align: center;
+      background: var(--fundo-rodape);
+      border-top: 4px solid #ffd166;
+    }
+
+    footer p {
+      margin: 8px 0;
+    }
+
+    footer a {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--texto-suave);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    footer a:hover {
+      color: #ffd166;
+      text-decoration: underline;
+    }
+
+    /* Fundo escuro que cobre a página quando um jogo é aberto. */
+    .modal-jogo {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Caixa central com as informações do jogo selecionado. */
+    .conteudo-modal {
+      position: relative;
+      background: var(--fundo-cartao);
+      color: var(--texto);
+      border: 3px solid #ffd166;
+      border-radius: 10px;
+      padding: 28px;
+      width: 100%;
+      max-width: 760px;
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: center;
+      box-shadow: 0 12px 50px var(--sombra-modal);
+    }
+
+    .conteudo-modal h2 {
+      color: var(--texto-destaque);
+      margin-top: 4px;
+      padding: 0 30px;
+    }
+
+    /* A imagem não é esticada nem cortada: mantém a proporção original. */
+    #imagemModal {
+      display: block;
+      max-width: 100%;
+      max-height: 50vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      margin: 20px auto;
+    }
+
+    /* Esconde a imagem caso o endereço não carregue. */
+    #imagemModal.imagem-indisponivel {
+      display: none;
+    }
+
+    .fechar-modal {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      margin: 0;
+      padding: 0 8px;
+      background: transparent;
+      color: #ffd166;
+      font-size: 30px;
+      line-height: 1.2;
+      border: none;
+      cursor: pointer;
+    }
+
+    .fechar-modal:hover {
+      background: transparent;
+      color: #ff6b8a;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .controle-tema {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .inicio h2 {
+        font-size: 2rem;
+      }
+
+      section {
+        padding: 40px 6%;
+      }
+
+      .conteudo-modal {
+        padding: 18px;
+      }
+
+      #imagemModal {
+        max-height: 42vh;
+      }
+    }
+
+
+    /* Cores de alto contraste para os dois temas. */
+    :root {
+      --cor-acao: #ffd166;
+      --texto-acao: #211d35;
+      --cor-hover: #ffb3c1;
+      --texto-hover: #211d35;
+      --cor-borda-destaque: #b77900;
+      --texto-etiqueta: #08765b;
+      --fundo-info: #ffffff;
+      --borda-info: #c8c0e2;
+      --texto-link-hover: #765000;
+    }
+
+    :root:not([data-tema="claro"]) {
+      --cor-acao: #ffd166;
+      --texto-acao: #17152b;
+      --cor-hover: #ff8fa3;
+      --texto-hover: #17152b;
+      --cor-borda-destaque: #ffd166;
+      --texto-etiqueta: #7ce7c7;
+      --fundo-info: #302858;
+      --borda-info: #514579;
+      --texto-link-hover: #ffd166;
+    }
+
+    :root[data-tema="claro"] {
+      --cor-acao: #f2bd42;
+      --texto-acao: #211d35;
+      --cor-hover: #f3a0b2;
+      --texto-hover: #211d35;
+      --cor-borda-destaque: #765000;
+      --texto-etiqueta: #08634f;
+      --fundo-info: #ffffff;
+      --borda-info: #b8aed5;
+      --texto-link-hover: #563900;
+    }
+
+    h1 { color: var(--texto-etiqueta); }
+    h1 span { color: var(--texto-destaque); }
+    nav a:hover, footer a:hover { color: var(--texto-link-hover); }
+    .etiqueta { color: var(--texto-etiqueta); }
+    .botao, button { background: var(--cor-acao); color: var(--texto-acao); }
+    button:hover, .botao:hover { background: var(--cor-hover); color: var(--texto-hover); }
+    .jogo:hover { border-color: var(--cor-borda-destaque); }
+    .manifesto { border-left-color: var(--cor-hover); }
+    footer { border-top-color: var(--cor-acao); }
+    .conteudo-modal { border-color: var(--cor-acao); }
+    .fechar-modal { color: var(--cor-acao); }
+    .fechar-modal:hover { color: var(--cor-hover); }
+
+    .sobre-indies { background: var(--fundo-secundario); }
+    .bloco-informativo {
+      background: var(--fundo-info);
+      color: var(--texto);
+      border: 2px solid var(--borda-info);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 18px 0;
+      box-shadow: 0 4px 14px var(--sombra-modal);
+    }
+    .bloco-informativo h3 { color: var(--texto-destaque); margin-top: 0; }
+    .bloco-informativo p, .bloco-informativo li { color: var(--texto); }
+    .lista-famosos { padding-left: 22px; }
+    .lista-famosos li { margin: 9px 0; }
+    .lista-famosos strong { color: var(--texto-destaque); }
+    .nota-indie { color: var(--texto-suave) !important; font-weight: bold; }
+
+    a:focus-visible, button:focus-visible, .jogo:focus-visible {
+      outline: 3px solid var(--texto-destaque);
+      outline-offset: 3px;
+    }
+  </style>
+</head>
+
+<body id="topo">
+
+  <header>
+    <h1>Indie<span>BR</span></h1>
+
+    <nav>
+      <a href="#sobre-indies">Sobre os indies</a>
+      <a href="#jogos">Jogos</a>
+      <a href="#manifesto">Manifesto</a>
+      <a href="#apoie">Como apoiar</a>
+    </nav>
+
+    <div class="controle-tema" aria-label="Configuração do tema">
+      <div class="seletor-tema" id="seletorTema" role="group" aria-label="Escolher tema">
+        <span class="indicador-tema" id="indicadorTema" aria-hidden="true"></span>
+        <button type="button" class="opcao-tema" data-tema="escuro" aria-pressed="false" aria-label="Tema escuro">🌙</button>
+        <button type="button" class="opcao-tema" data-tema="claro" aria-pressed="false" aria-label="Tema claro">☀️</button>
+        <button type="button" class="opcao-tema" data-tema="sistema" aria-pressed="true" aria-label="Tema do dispositivo">💻</button>
+      </div>
+      <span class="nome-tema" id="nomeTema">dispositivo</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="inicio">
+      <p class="etiqueta">FEITO POR QUEM AMA JOGOS</p>
+      <h2>Grandes ideias.<br>Pequenos estúdios.</h2>
+      <p>
+        Jogos independentes também merecem espaço.
+        Conheça projetos criativos e ajude a divulgar quem faz jogos com paixão.
+      </p>
+      <a class="botao" href="#jogos">Conhecer jogos</a>
+    </section>
+
+    <section id="sobre-indies" class="sobre-indies">
+      <h2>O universo dos jogos independentes</h2>
+      <div class="bloco-informativo">
+        <h3>O que são jogos indies?</h3>
+        <p>Jogos indies (abreviação de <em>independent games</em>, ou jogos independentes) são produzidos por criadores ou estúdios que trabalham com maior autonomia, sem depender diretamente de uma grande publicadora para controlar todo o desenvolvimento. Muitas vezes, são feitos por equipes pequenas ou até por uma única pessoa.</p>
+        <p>Isso permite experimentar ideias diferentes, estilos artísticos próprios e histórias originais. Um jogo indie não precisa ter gráficos simples nem ser pequeno: o que importa é, principalmente, a independência na criação e na produção.</p>
+      </div>
+
+      <div class="bloco-informativo">
+        <h3>Como e quando surgiram?</h3>
+        <p>O desenvolvimento independente existe desde os primeiros anos dos videogames. Nas décadas de 1970 e 1980, pessoas e pequenos grupos já criavam jogos para computadores domésticos e compartilhavam ou vendiam suas produções por conta própria.</p>
+        <p>O termo “indie game” ganhou força principalmente nos anos 2000. A internet mais acessível, as lojas digitais e ferramentas de criação mais fáceis de usar ajudaram pequenos desenvolvedores a divulgar e distribuir seus jogos para jogadores do mundo todo. Títulos como <em>Braid</em> e <em>World of Goo</em>, lançados em 2008, ajudaram a dar visibilidade a essa cena.</p>
+      </div>
+
+      <div class="bloco-informativo">
+        <h3>Jogos indies muito conhecidos</h3>
+        <ul class="lista-famosos">
+          <li><strong>Minecraft:</strong> começou como um projeto independente e ficou conhecido pela liberdade de construir e explorar.</li>
+          <li><strong>Stardew Valley:</strong> criado por uma única pessoa, mistura fazenda, exploração e convivência com personagens.</li>
+          <li><strong>Undertale:</strong> ficou famoso por seus personagens marcantes e pelas escolhas que afetam a aventura.</li>
+          <li><strong>Hollow Knight:</strong> destaca-se pelo mundo desenhado à mão, exploração e desafios.</li>
+          <li><strong>Celeste:</strong> combina plataforma precisa com uma história sobre desafios pessoais.</li>
+          <li><strong>Cuphead:</strong> chama atenção pela animação inspirada em desenhos antigos.</li>
+          <li><strong>Terraria:</strong> oferece exploração, construção e criação em um mundo 2D.</li>
+        </ul>
+        <p class="nota-indie">Esses exemplos mostram como jogos independentes podem ter estilos, tamanhos e propostas muito diferentes.</p>
+      </div>
+    </section>
+
+    <section id="jogos">
+      <h2>Conheça alguns jogos</h2>
+      <p>Use os botões para filtrar a lista. Clique em um cartão para ver os detalhes.</p>
+
+      <div class="filtros">
+        <button type="button" onclick="filtrarJogos('todos')">Todos</button>
+        <button type="button" onclick="filtrarJogos('brasileiro')">Brasileiros</button>
+        <button type="button" onclick="filtrarJogos('aventura')">Aventura</button>
+        <button type="button" onclick="filtrarJogos('relax')">Relaxantes</button>
+      </div>
+
+      <div class="lista-jogos">
+
+        <article class="jogo" data-brasileiro="nao" data-tipo="aventura" tabindex="0" role="button" aria-label="Ver detalhes de Celeste">
+          <div class="capa capa-celeste" aria-hidden="true"></div>
+          <h3>Celeste</h3>
+          <p>Ajude Madeline a sobreviver à sua jornada até o topo da Montanha Celeste neste jogo de plataforma super preciso e meticulosamente criado pelos mesmos desenvolvedores de TowerFall.</p>
+        </article>
+
+        <article class="jogo" data-brasileiro="nao" data-tipo="aventura" tabindex="0" role="button" aria-label="Ver detalhes de Hollow Knight">
+          <div class="capa capa-hollow" aria-hidden="true"></div>
+          <h3>Hollow Knight</h3>
+          <p>Hollow Knight é um desafiador jogo de ação e aventura em 2D. Você explorará cavernas labirínticas, lutará contra criaturas corrompidas e escapará de armadilhas complexas, tudo para desvendar um antigo mistério há muito oculto.</p>
+        </article>
+
+        <article class="jogo" data-brasileiro="nao" data-tipo="relax" tabindex="0" role="button" aria-label="Ver detalhes de Stardew Valley">
+          <div class="capa capa-stardew" aria-hidden="true"></div>
+          <h3>Stardew Valley</h3>
+          <p>Stardew Valley é um RPG sem fim da vida no campo! Você herdou a antiga fazenda de seu avô no Vale do Orvalho. Equipado com ferramentas de segunda mão e algumas moedas, você irá começar sua nova vida. Será que você consegue aprender a viver da terra e transformar esses campos absurdamente vegetados em uma casa próspera?</p>
+        </article>
+
+        <article class="jogo" data-brasileiro="sim" data-tipo="aventura" tabindex="0" role="button" aria-label="Ver detalhes de Dandara">
+          <div class="capa capa-dandara" aria-hidden="true"></div>
+          <h3>Dandara</h3>
+          <p>O mundo de Salt está à beira do colapso. Os cidadãos, que um dia foram espíritos livres, agora estão oprimidos e isolados. Mas nem tudo está perdido. Dessa atmosfera de medo surge uma heroína, um raio de esperança. Seu nome é Dandara. Bem-vindo a um jogo de plataforma metroidvania 2D único, cheio de criaturas místicas e exploração sem limites.</p>
+        </article>
+
+        <article class="jogo" data-brasileiro="nao" data-tipo="aventura" tabindex="0" role="button" aria-label="Ver detalhes de Nine Sols">
+          <div class="capa capa-nine" aria-hidden="true"></div>
+          <h3>Nine Sols</h3>
+          <p>Nine Sols é um jogo de ação-plataforma 2D desenhado à mão, com narrativa rica e combate inspirado em Sekiro. Embarque em uma jornada de fantasia asiática, explore terras de uma antiga raça alienígena e ajude um herói a derrotar os 9 Sols, governantes de um reino esquecido.</p>
+        </article>
+
+      </div>
+
+      <p id="mensagem" class="mensagem" aria-live="polite"></p>
+    </section>
+
+    <section id="manifesto" class="manifesto">
+      <h2>Indie não é sinônimo de inferior.</h2>
+      <p>
+        Jogos independentes costumam ser feitos por equipes pequenas e com menos
+        dinheiro para divulgação. Isso não significa que tenham menos criatividade
+        ou qualidade.
+      </p>
+      <p>
+        No Brasil, o preço dos jogos, o acesso a computadores e a pouca divulgação
+        podem dificultar que novos projetos encontrem seu público.
+      </p>
+      <p>
+        Quando conhecemos, avaliamos e recomendamos um jogo, ajudamos mais pessoas
+        a descobri-lo.
+      </p>
+    </section>
+
+    <section id="apoie">
+      <h2>Como apoiar os jogos indies?</h2>
+
+      <div class="dicas">
+        <article>
+          <h3>1. Experimente</h3>
+          <p>Teste demonstrações gratuitas de jogos.</p>
+        </article>
+
+        <article>
+          <h3>2. Compartilhe</h3>
+          <p>Indique seus jogos favoritos para amigos.</p>
+        </article>
+
+        <article>
+          <h3>3. Valorize</h3>
+          <p>Deixe uma avaliação honesta e, se puder, compre o jogo.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Janela centralizada que mostra somente o jogo selecionado. -->
+  <div class="modal-jogo" id="modalJogo" aria-hidden="true">
+    <div class="conteudo-modal" role="dialog" aria-modal="true" aria-labelledby="tituloModal">
+      <button type="button" class="fechar-modal" id="fecharModal" aria-label="Fechar janela">&times;</button>
+      <h2 id="tituloModal"></h2>
+      <img id="imagemModal" src="" alt="">
+      <p id="textoModal"></p>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>IndieBR</strong> — Jogos independentes, grandes histórias. ♥</p>
+    <p>Feito para valorizar quem cria jogos, no Brasil e no mundo.</p>
+    <a href="#topo">Voltar ao topo ↑</a>
+  </footer>
+
+  <script>
+    /* TEMA: claro, escuro ou seguindo a preferência do dispositivo. */
+    const botoesTema = document.querySelectorAll(".opcao-tema");
+    const seletorTema = document.getElementById("seletorTema");
+    const indicadorTema = document.getElementById("indicadorTema");
+    const nomeTema = document.getElementById("nomeTema");
+    const preferenciaEscura = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function aplicarTema(escolha) {
+      const temaFinal = escolha === "sistema"
+        ? (preferenciaEscura.matches ? "escuro" : "claro")
+        : escolha;
+
+      document.documentElement.dataset.tema = temaFinal;
+      document.documentElement.style.colorScheme = temaFinal;
+
+      // Move a bolinha dentro do controle e atualiza o nome do tema.
+      seletorTema.dataset.selecao = escolha;
+      nomeTema.textContent = escolha === "sistema" ? "dispositivo" : escolha;
+      botoesTema.forEach(function(botao) {
+        botao.setAttribute("aria-pressed", String(botao.dataset.tema === escolha));
+      });
+    }
+
+    // Recupera a escolha anterior; se não houver, usa o tema do dispositivo.
+    const temaSalvo = localStorage.getItem("temaIndieBR");
+    let temaAtual = ["claro", "escuro", "sistema"].includes(temaSalvo)
+      ? temaSalvo
+      : "sistema";
+
+    aplicarTema(temaAtual);
+
+    botoesTema.forEach(function(botao) {
+      botao.addEventListener("click", function() {
+        temaAtual = botao.dataset.tema;
+        localStorage.setItem("temaIndieBR", temaAtual);
+        aplicarTema(temaAtual);
+      });
+    });
+
+    // Se estiver em "dispositivo", acompanha mudanças na preferência do sistema.
+    preferenciaEscura.addEventListener("change", function() {
+      if (temaAtual === "sistema") {
+        aplicarTema("sistema");
+      }
+    });
+
+    /* FILTROS DOS JOGOS */
+    function filtrarJogos(filtro) {
+      const jogos = document.querySelectorAll(".jogo");
+      let quantidadeVisivel = 0;
+
+      jogos.forEach(function(jogo) {
+        const ehBrasileiro = jogo.dataset.brasileiro === "sim";
+        const tipoDoJogo = jogo.dataset.tipo;
+        let mostrar = true;
+
+        if (filtro === "brasileiro" && !ehBrasileiro) {
+          mostrar = false;
+        } else if (filtro === "aventura" && tipoDoJogo !== "aventura") {
+          mostrar = false;
+        } else if (filtro === "relax" && tipoDoJogo !== "relax") {
+          mostrar = false;
+        }
+
+        jogo.style.display = mostrar ? "" : "none";
+
+        if (mostrar) {
+          quantidadeVisivel++;
+        }
+      });
+
+      const mensagem = document.getElementById("mensagem");
+      mensagem.textContent = quantidadeVisivel === 0
+        ? "Nenhum jogo encontrado."
+        : "";
+    }
+
+    /* ELEMENTOS DA JANELA */
+    const modal = document.getElementById("modalJogo");
+    const tituloModal = document.getElementById("tituloModal");
+    const imagemModal = document.getElementById("imagemModal");
+    const textoModal = document.getElementById("textoModal");
+    const botaoFechar = document.getElementById("fecharModal");
+
+    /* Encontra a imagem que está definida no CSS de cada capa. */
+    function obterImagemDaCapa(capa) {
+      if (!capa) return "";
+
+      const fundo = getComputedStyle(capa).backgroundImage;
+      const resultado = fundo.match(/url\(["']?(.*?)["']?\)/);
+
+      return resultado ? resultado[1] : "";
+    }
+
+    /* Abre a caixa com o jogo que foi clicado. */
+    function abrirJogo(cartao) {
+      const nome = cartao.querySelector("h3");
+      const descricao = cartao.querySelector("p");
+      const capa = cartao.querySelector(".capa");
+
+      if (!nome || !descricao) return;
+
+      tituloModal.textContent = nome.textContent.trim();
+      textoModal.textContent = descricao.textContent.trim();
+
+      const enderecoImagem = obterImagemDaCapa(capa);
+
+      imagemModal.classList.remove("imagem-indisponivel");
+      imagemModal.alt = "Capa de " + nome.textContent.trim();
+
+      if (enderecoImagem) {
+        imagemModal.src = enderecoImagem;
+        imagemModal.style.display = "block";
+      } else {
+        imagemModal.removeAttribute("src");
+        imagemModal.classList.add("imagem-indisponivel");
+      }
+
+      modal.style.display = "flex";
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      botaoFechar.focus();
+    }
+
+    /* Clique no cartão abre o jogo correspondente. */
+    document.querySelectorAll(".jogo").forEach(function(cartao) {
+      cartao.addEventListener("click", function() {
+        abrirJogo(cartao);
+      });
+
+      /* Também permite abrir o jogo com Enter ou Espaço. */
+      cartao.addEventListener("keydown", function(evento) {
+        if (evento.key === "Enter" || evento.key === " ") {
+          evento.preventDefault();
+          abrirJogo(cartao);
+        }
+      });
+    });
+
+    /* Se a imagem externa falhar, o texto continua aparecendo. */
+    imagemModal.addEventListener("error", function() {
+      imagemModal.classList.add("imagem-indisponivel");
+    });
+
+    /* Fecha a janela. */
+    function fecharJanelaJogo() {
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    botaoFechar.addEventListener("click", fecharJanelaJogo);
+
+    /* Fecha se o usuário clicar no fundo escuro. */
+    modal.addEventListener("click", function(evento) {
+      if (evento.target === modal) {
+        fecharJanelaJogo();
+      }
+    });
+
+    /* Fecha também ao apertar Escape. */
+    document.addEventListener("keydown", function(evento) {
+      if (evento.key === "Escape" && modal.style.display === "flex") {
+        fecharJanelaJogo();
+      }
+    });
+  </script>
+</body>
+</html>
